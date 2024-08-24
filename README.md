@@ -89,11 +89,18 @@ It's recommended to start with [quickstart](#quickstart) to understand how the s
 1. When the time comes you'd like to extract your stats, plug your USB drive in the console, select your screenshots and [Copy to USB Drive](https://www.playstation.com/en-us/support/games/ps5-media-gallery-view-screenshots/#usb)
 1. Transfer them to your `source_data` folder, just like you did in the [quickstart](#quickstart)
 1. navigate to your cloned repo (again, you did that in quickstart)
-1. ensure you have `FIFA_WORKDIR` env var pointing to the folder containing `source_data` directory.
+1. ensure you have `FIFA_WORKDIR` env var pointing to the folder containing `source_data` directory. Best practice would be adding it to your `./bashrc` (or equivalent) file.
 1. run `make run` command.
 1. Your `jobs` directory in `FIFA_WORKDIR` should now have the results in.
 
 > Warning: when taking screenshots, ensure all numbers are on a reasonably dark background)
+
+
+## Devcontainer
+
+To run via devcontainer, follow [this tutorial](https://code.visualstudio.com/docs/devcontainers/tutorial) to set your environment
+
+You'll also notice that `FIFA_WORKDIR` env var is used in `devcontainer.json` under mounts. This means you should have this defined in the shell instance bulding the container, which I'm not sure how to do other than just adding it to your `./bashrc` file.
 
 ## Implementation details
 

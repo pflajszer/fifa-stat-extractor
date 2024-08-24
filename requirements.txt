@@ -1,0 +1,4 @@
+pandas
+pillow
+easyocr
+opencv-contrib-python

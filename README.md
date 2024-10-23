@@ -23,6 +23,7 @@ The listed configuration has been tested and should work everywhere.
 
 - Games:
     - EA Sports FC 2024
+    - EA Sports FC 2025
 
 I'm hoping the Match Facts remains fairly static, Looking at [FIFA 23](https://platform.polygon.com/wp-content/uploads/sites/2/chorus/uploads/chorus_asset/file/24081980/FIFA_23_20221004120157.jpg?quality=90&strip=all&crop=0%2C0%2C100%2C100&w=750) stats, there's a chance this structure is retained in the next generation. Although I already see some differences between 23 and 24, so I'm expecting the pixel bounding boxes will have to be updated 
 

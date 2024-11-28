@@ -142,6 +142,7 @@ def determine_page_type_by_image(image_path: str, reader: Reader) -> dict:
     img = cv2.imread(img_path)
     result = reader.readtext(
         img,
+        allowlist=set("DRIBBLE TACKLE SUCCESS RATE SHOT ACCURACY PASS "),
         text_threshold=0.01,
         low_text=0.1,
     )

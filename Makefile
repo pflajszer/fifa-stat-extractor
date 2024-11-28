@@ -1,8 +1,13 @@
-VER=0.1.0
+VER=0.1.1
 build:
-	docker build . -t fifa-stat-extractor -t pflajszer/fifa-stat-extractor:${VER} -t pflajszer/fifa-stat-extractor:latest
+	docker build . -t fifa-stat-extractor -t pawelflajszer/fifa-stat-extractor:${VER} -t pawelflajszer/fifa-stat-extractor:latest
 run:
-	docker run --mount type=bind,source=${FIFA_WORKDIR},target=/app/db/fifa docker.io/pflajszer/fifa-stat-extractor:latest
+	docker run --mount type=bind,source=${FIFA_WORKDIR},target=/app/db/fifa pawelflajszer/fifa-stat-extractor:latest
 cleanup:
-	docker image rm pflajszer/fifa-stat-extractor:latest -f
-	docker image rm pflajszer/fifa-stat-extractor:${VER} -f
+	docker image rm pawelflajszer/fifa-stat-extractor:latest -f
+	docker image rm pawelflajszer/fifa-stat-extractor:${VER} -f
+pull:
+	docker pull pawelflajszer/fifa-stat-extractor:latest
+push:
+	docker push pawelflajszer/fifa-stat-extractor:${VER}
+	docker push pawelflajszer/fifa-stat-extractor:latest

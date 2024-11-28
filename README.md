@@ -1,5 +1,15 @@
 # Fifa Stat Extractor
 
+# CHANGELOG
+
+### 0.1.1
+
+- Improved `determine_page_type_by_image()` function by providing `allowlist` of characters. This constraints the model to a subset of characters to improve rate of success
+- Removed `build` as a dependency of `run` in Makefile (since we don't always want to rebuild)
+- Pushed the container to Docker Hub (updated the README with `Quickstart/From Docker Hub` section and the tag to reflect my Docker account name)
+
+# README
+
 ## Problem
 
 FIFA (or now EA Sports FC) does not provide an API for developers to analyze match stats. You can view your player statistics in-game, but those are already aggregated and while interesting to look at, they don't satisfied my data craving.
@@ -23,6 +33,7 @@ The listed configuration has been tested and should work everywhere.
 
 - Games:
     - EA Sports FC 2024
+    - EA Sports FC 2025
 
 I'm hoping the Match Facts remains fairly static, Looking at [FIFA 23](https://platform.polygon.com/wp-content/uploads/sites/2/chorus/uploads/chorus_asset/file/24081980/FIFA_23_20221004120157.jpg?quality=90&strip=all&crop=0%2C0%2C100%2C100&w=750) stats, there's a chance this structure is retained in the next generation. Although I already see some differences between 23 and 24, so I'm expecting the pixel bounding boxes will have to be updated 
 
@@ -38,6 +49,29 @@ For 16:9 screens, so the vast majority, supporting different resolutions could b
 
 
 ## Quickstart
+
+## From Docker Hub
+
+Source containers can be found [here](https://hub.docker.com/r/pawelflajszer/fifa-stat-extractor/tags).
+
+```bash
+cd ~
+
+# the below steps just ensure you have the right folder structure (container will mount your FIFA_WORKDIR and work in its boundries)
+mkdir -p fifa-stats/source_data
+export FIFA_WORKDIR="/home/$USER/fifa-stats/"
+```
+
+copy test data into `FIFA_WORKDIR` from [here](https://github.com/pflajszer/fifa-stat-extractor/tree/main/tests/test-data). Then:
+
+```bash
+docker pull pawelflajszer/fifa-stat-extractor:latest
+docker run --mount type=bind,source=${FIFA_WORKDIR},target=/app/db/fifa pawelflajszer/fifa-stat-extractor:latest
+```
+
+> The above `docker pull` and `docker run` commands are also available via source [Makefile](https://github.com/pflajszer/fifa-stat-extractor/blob/main/Makefile)
+
+## From source
 
 ```bash
 cd ~

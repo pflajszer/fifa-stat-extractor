@@ -37,7 +37,7 @@
 	"workspaceFolder": "/app",
 	"mounts": [
 		"type=bind,source=/home/${localEnv:USER}/.ssh,target=/root/.ssh,readonly",
-		"type=bind,source=/mnt/d/source/db/fifa,target=/app/db/fifa"
+		"type=bind,source=${localEnv:FIFA_WORKDIR},target=/app/db/fifa"
 	],
 	"containerEnv": {
 		"PYTHONPATH": "${containerWorkspaceFolder}"

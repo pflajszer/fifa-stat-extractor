@@ -185,7 +185,7 @@ In this example, if this bounding box extracted text is "TACKLE SUCCESS RATE", w
 
 ### Stat types
 
-**State type** - an individual statistic (i.e. `Standing Tackles`).
+**Stat type** - an individual statistic (i.e. `Standing Tackles`).
 
 As shown before, each stat will have it's own bounding box and label denoting which stat it is.
 Individual images are also saved in your job folder inside individual match directories:
@@ -199,6 +199,30 @@ Individual images are also saved in your job folder inside individual match dire
 Text extraction is done separately for each stats, since we used the bounding boxes to 'slice' each image and labeled with the stat name, as shown in [stat types section](#stat-types).
 
 We extract text using [easyocr](https://github.com/JaidedAI/EasyOCR)
+
+## Custom model
+
+From version `0.2.0`, we're using a custom-trained model based on 30k stats.
+Results from initial training weren't so good:
+
+root@c41f3040de89:/app# /usr/local/bin/python /app/tests/b.py
+BASIC:
+0 407 407
+1 1906 2313
+2 2697 5010
+3 17087 22097
+4 0 22097
+22097
+
+CUSTOM
+0 274 274
+1 1284 1558
+2 2582 4140
+3 19238 23378
+4 0 23378
+23378
+sad
+root@c41f3040de89:/app# 
 
 ## Limitations & Known issues
 

@@ -16,7 +16,7 @@ def extract_stats_from_sliced_images(images_dir: str, reader: Reader) -> dict:
     """Extracts stats from a single match and match type (i.e. SHOOTING)"""
     stats = {}
     for filename in os.listdir(images_dir):
-        if filename.endswith(".jpg"):
+        if filename.endswith(".jpg") and not filename.startswith("EA SPORTS FC"):
             if filename == "PAGE_ID.jpg":
                 pass
             else:
@@ -155,11 +155,90 @@ def determine_page_type_by_image(image_path: str, reader: Reader) -> dict:
     print(f"we're currently parsing '{page_type['type_name']}' page type")
     return page_type
 
+def get_allowed_chars_by_filename(filename: str): 
+    # DEFENDING
+    defending_ints = ['STANDING_TACKLES_AWAY',
+        'INTERCEPTIONS_AWAY',
+        'AERIAL_DUELS_WON_AWAY',
+        'DEFENSIVE_DUELS_WON_HOME',
+        'STANDING_TACKLES_WON_HOME',
+        'BEATEN_BY_OPPONENT_HOME',
+        'FOULS_COMMITTED_AWAY',
+        'BLOCKS_HOME',
+        'STANDING_TACKLES_WON_AWAY',
+        'PENALTIES_COMMITTED_AWAY',
+        'OFFENSIVE_DUELS_WON_HOME',
+        'SLIDING_TACKLES_AWAY',
+        'RED_CARDS_HOME',
+        'SLIDING_TACKLES_HOME',
+        'PENALTIES_COMMITTED_HOME',
+        'OFFENSIVE_DUELS_WON_AWAY',
+        'BLOCKS_AWAY',
+        'BEATEN_BY_OPPONENT_AWAY',
+        'STANDING_TACKLES_HOME',
+        'CLEARANCES_HOME',
+        'CLEARANCES_AWAY',
+        'DEFENSIVE_DUELS_WON_AWAY',
+        'RED_CARDS_AWAY',
+        'SAVES_AWAY',
+        'YELLOW_CARDS_HOME',
+        'SLIDING_TACKLES_WON_AWAY',
+        'INTERCEPTIONS_HOME',
+        'YELLOW_CARDS_AWAY',
+        'SAVES_HOME',
+        'SLIDING_TACKLES_WON_HOME',
+        'AERIAL_DUELS_WON_HOME',
+        'FOULS_COMMITTED_HOME'
+    ] 
+    defending_floats =  []
+    defending_percentage = ['TACKLE_SUCCESS_RATE_HOME', 'TACKLE_SUCCESS_RATE_AWAY']
+    defending_text = []
+    defending_timespan = []
+    
+    # PASSING 
+    passing_ints = ['PASS_AND_GO_HOME', 'CROSS_HOME', 'LOBBED_THROUGH_AWAY', 'KEY_PASS_HOME', 'BREAKAWAY_HOME', 'GROUND_HOME', 'KEY_PASS_AWAY', 'BREAKAWAY_AWAY', 'DOWN_WING_AWAY', 'OFFSIDE_AWAY', 'TOTAL_PASSES_AWAY', 'THROUGH_HOME', 'SET_PIECES_HOME', 'COMPLETED_HOME', 'OTHER_HOME', 'FIRST_TIME_HOME', 'FIRST_TIME_AWAY', 'LOB_AWAY', 'THROUGH_AWAY', 'OTHER_AWAY', 'OFFSIDE_HOME', 'DOWN_WING_HOME', 'INTERCEPTED_AWAY', 'CROSS_AWAY', 'GROUND_AWAY', 'SET_PIECES_AWAY', 'COMPLETED_AWAY', 'PASS_AND_GO_AWAY', 'TOTAL_PASSES_HOME', 'LOBBED_THROUGH_HOME', 'LOB_HOME', 'INTERCEPTED_HOME'] 
+    passing_floats =  []
+    passing_percentage = []
+    passing_text = []
+    passing_timespan = []
+    
+    # SHOOTING 
+    shooting_ints = ['POWER_AWAY', 'CHIP_AWAY', 'FINESSE_HOME', 'BLOCKED_AWAY', 'NORMAL_HOME', 'INSIDE_THE_BOX_AWAY', 'CHIP_HOME', 'HEADER_AWAY', 'OFF_TARGET_HOME', 'FINESSE_AWAY', 'HEADER_HOME', 'FAR_SIDE_HOME', 'SET_PIECES_HOME', 'VOLLEY_HOME', 'ON_TARGET_HOME', 'NEAR_SIDE_HOME', 'FAR_SIDE_AWAY', 'TOTAL_SHOTS_AWAY', 'SET_PIECES_AWAY', 'POWER_HOME', 'OFF_TARGET_AWAY', 'INSIDE_THE_BOX_HOME', 'OUTSIDE_THE_BOX_AWAY', 'ON_TARGET_AWAY', 'TOTAL_SHOTS_HOME', 'VOLLEY_AWAY', 'BLOCKED_HOME', 'OUTSIDE_THE_BOX_HOME', 'NORMAL_AWAY', 'NEAR_SIDE_AWAY']
+    shooting_ints_with_blank_possibility = ['INSIDE_THE_BOX_GOALS_HOME', 'FAR_SIDE_GOALS_HOME', 'INSIDE_THE_BOX_GOALS_AWAY', 'FINESSE_GOALS_AWAY', 'CHIP_GOALS_HOME', 'VOLLEY_GOALS_HOME', 'NORMAL_GOALS_HOME', 'SET_PIECES_GOALS_AWAY', 'OUTSIDE_THE_BOX_GOALS_HOME', 'OUTSIDE_THE_BOX_GOALS_AWAY', 'NORMAL_GOALS_AWAY', 'SET_PIECES_GOALS_HOME', 'CHIP_GOALS_AWAY', 'FINESSE_GOALS_HOME', 'POWER_GOALS_HOME', 'POWER_GOALS_AWAY', 'HEADER_GOALS_HOME', 'HEADER_GOALS_AWAY', 'FAR_SIDE_GOALS_AWAY', 'NEAR_SIDE_GOALS_AWAY', 'NEAR_SIDE_GOALS_HOME', 'VOLLEY_GOALS_AWAY']
+    shooting_floats =  []
+    shooting_percentage = []
+    shooting_text = []
+    shooting_timespan = []
+    
+    # SUMMARY 
+    summary_ints = ['PASSES_HOME', 'INTERCEPTIONS_AWAY', 'YELLOW_CARDS_AWAY', 'PENALTY_KICKS_HOME', 'SAVES_HOME', 'SHOTS_HOME', 'SCORE_AWAY', 'POSSESSION_AWAY', 'CORNERS_HOME', 'FOULS_COMMITTED_AWAY', 'TACKLES_HOME', 'CORNERS_AWAY', 'SCORE_HOME', 'TACKLES_WON_HOME', 'PENALTY_KICKS_AWAY', 'TACKLES_AWAY', 'OFFSIDES_HOME', 'FOULS_COMMITTED_HOME', 'FREE_KICKS_HOME', 'SHOTS_AWAY', 'TACKLES_WON_AWAY', 'BALL_RECOVERY_TIME_HOME', 'BALL_RECOVERY_TIME_AWAY', 'OFFSIDES_AWAY', 'SAVES_AWAY', 'POSSESSION_HOME', 'YELLOW_CARDS_HOME', 'PASSES_AWAY', 'INTERCEPTIONS_HOME', 'FREE_KICKS_AWAY']
+    summary_floats =  ['EXPECTED_GOALS_AWAY', 'EXPECTED_GOALS_HOME']
+    summary_percentage = ['PASS_ACCURACY_HOME', 'DRIBBLE_SUCCESS_RATE_HOME', 'PASS_ACCURACY_AWAY', 'SHOT_ACCURACY_AWAY', 'SHOT_ACCURACY_HOME', 'DRIBBLE_SUCCESS_RATE_AWAY']
+    summary_text = ['TEAM_HOME', 'TEAM_AWAY', "PAGE_ID"]
+    summary_timespan = ['TOTAL_MATCH_TIME']
 
-def get_allowed_chars_by_filename(filename: str):
-    return (
-        "0123456789.:%" if filename not in ["TEAM_HOME.jpg", "TEAM_AWAY.jpg"] else None
-    )
+    ints = defending_ints + passing_ints + shooting_ints + summary_ints
+    floats = defending_floats + passing_floats + shooting_floats + summary_floats
+    percentages = defending_percentage + passing_percentage + shooting_percentage + summary_percentage
+    texts = defending_text + passing_text + shooting_text + summary_text
+    timespans = defending_timespan + passing_timespan + shooting_timespan + summary_timespan
+    if any(substring in filename for substring in shooting_ints_with_blank_possibility): # edge case: goals can be empty
+        return "0123456789 "
+    elif any(substring in filename for substring in ints): # int
+        return "0123456789"
+    elif any(substring in filename for substring in floats): # float
+        return "0123456789."
+    elif any(substring in filename for substring in texts): # text
+        return "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    elif any(substring in filename for substring in percentages): # percentages
+        return "0123456789%"
+    elif any(substring in filename for substring in timespans): # timespans
+        return "0123456789:"
+    else:
+        raise ValueError(f"UNKNOWN FILE TYPE: {filename}")
+    # return (
+    #     "0123456789.:%" if filename not in ["TEAM_HOME.jpg", "TEAM_AWAY.jpg", "PAGE_ID.jpg"] else None
+    # )
 
 
 def get_datetime_from_filename(filename: str):

@@ -2,6 +2,12 @@
 
 # CHANGELOG
 
+### 0.2.0
+
+- Added the ability of running a job based on a [configuration file](#job-config). First feature is [handling missing screenshots](#missing-screenshots) should you need it.
+- The tool now supports multiple sessions; `SESSION_ID` column in the output tables was replaced with `Session_Adjusted_Date`. More info on this [here](#identification).
+- Added GPU support inside the devcontainer.
+
 ### 0.1.1
 
 - Improved `determine_page_type_by_image()` function by providing `allowlist` of characters. This constraints the model to a subset of characters to improve rate of success
@@ -136,6 +142,29 @@ To run via devcontainer, follow [this tutorial](https://code.visualstudio.com/do
 
 You'll also notice that `FIFA_WORKDIR` env var is used in `devcontainer.json` under mounts. This means you should have this defined in the shell instance bulding the container, which I'm not sure how to do other than just adding it to your `./bashrc` file.
 
+## Job config
+
+You can provide an optional job config by creating a `source_data/job_config.json` file among your image files.
+The config itself takes a form of a key-value pairs: `"date": { ... config }`
+
+```json
+{
+    "2024-12-10": {
+        "key1": 123,
+        "key2": "my value",
+        "key3": [
+            1,2,3
+        ] 
+    },
+    // next dates...
+}
+```
+
+Currently, we support the following keys:
+
+- `missed_match_indices`: Used to handle matches that we've played but forgot to take screenshots in. Only handy if you track your results outside of this tool and need to join the data later. Usage is described in detail in [Missing screenshots](#missing-screenshots) section
+
+
 ## Implementation details
 
 ### Premise
@@ -193,7 +222,6 @@ Individual images are also saved in your job folder inside individual match dire
 ![sliced images](assets/sliced_imgs.png)
 
 
-
 ### Text extraction
 
 Text extraction is done separately for each stats, since we used the bounding boxes to 'slice' each image and labeled with the stat name, as shown in [stat types section](#stat-types).
@@ -223,6 +251,40 @@ CUSTOM
 23378
 sad
 root@c41f3040de89:/app# 
+
+
+### Missing screenshots
+
+> This applies only if you care about which Match ID is assigned to a game in the resulting tables.
+
+If you're tracking your games outside of this tool (to later join the data) and forgot to take screenshots of some games, you can provide a `source_data/job_config.json` file to retain the sequence to match your real-life data. The idea is that you provide an indices (0-indexed, not 1-indexed - let's be NORMAL) of matches you don't have screenshots for in an array key `missed_match_indices`.
+
+Example:
+It's 10th Dec 2024. You played a session with friends. There were 12 games, but you forgot to take screenshots in second, third and seventh game. Your job_config should look as follows:
+
+```json
+{
+    "2024-12-10": {
+        "missed_match_indices": [
+            1, // remember - they're 0-indexed, so second game is index 1!
+            2,
+            6
+        ]
+    }
+}
+```
+The resulting Match IDs assigned to your games in sequence (sorted by the time at which the screenshots were taken) will be: `0, 3, 4, 5, 7, 8, 9, 10, 11`
+That way, you'll be able to join your data later correctly.
+
+### Identification
+
+We keep track of all the matches based on their filenames. The format is: `EA SPORTS FC 25_{YYYYMMDDHHMMSS}.jpg`. We extract the Datetime and assing a `Session_Adjusted_Date`, which is the date of the screenshot minus 10 hours. This is fixed at the moment and the reason for it is that people usually play in the evening and often after midnight. The session then is defined as running from 14:00 on one day until 14:00 the next day.
+
+Time allows us to sort the matches to find their sequence. We therefore assign IDs as 0-indexed intergers.
+
+As described earlier, we define a session as kind of a 'matchday' - this allows later processing take into account matches played after midnight and such. If you run a job spanning across multiple sessions, you might notice the `Match_ID`s reset to `0` between sessions. `MATCH_ID` is therefore only unique within a session.
+
+> Should you need a UUID of a match, it would be a combination of Session_Adjusted_Date and `MATCH_ID`.
 
 ## Limitations & Known issues
 

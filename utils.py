@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 import shutil
@@ -9,7 +9,7 @@ from easyocr import Reader
 import cv2
 import pandas as pd
 
-from constants import OUTPUT_PATH, PAGE_ID_LABEL, SESSION_STATS_JSON_FILENAME
+from constants import JOB_CONFIG, OUTPUT_PATH, PAGE_ID_LABEL, SESSION_STATS_JSON_FILENAME
 
 
 def extract_stats_from_sliced_images(images_dir: str, reader: Reader) -> dict:
@@ -251,6 +251,16 @@ def get_datetime_from_filename(filename: str):
 
     return dt
 
+def check_next_index(session_date, folder_index, job_config):
+    # Base case: if the next index is not in the missed_match_indices, return the current offset
+    if session_date not in job_config or folder_index not in job_config[session_date]["missed_match_indices"]:
+        return folder_index
+    
+    # If the current index is found, increment the folder_index and offset, then check recursively
+    print(f"No match stats are available for match on index {folder_index} on {session_date}. Setting i={folder_index+1}...")
+    folder_index += 1
+    return check_next_index(session_date, folder_index + 1, job_config)
+
 
 def partition_by_game(source_path: str, staging_path: str):
     files_in_directory = os.listdir(source_path)
@@ -271,6 +281,12 @@ def partition_by_game(source_path: str, staging_path: str):
         dt = get_datetime_from_filename(filename)
         # Append tuple of (datetime, filename) to the list
         files_with_datetime.append((dt, filename))
+    
+    # Load job config if file exists
+    job_config = {}
+    if os.path.exists(JOB_CONFIG):
+        with open(JOB_CONFIG, 'r') as file:
+            job_config = json.load(file)
 
     # Step 2: Sort the files by datetime
     files_with_datetime.sort(key=lambda x: x[0])
@@ -278,14 +294,24 @@ def partition_by_game(source_path: str, staging_path: str):
     # Step 3: Group files into folders of 4 files each
     folder_index = 0
     batch = []
+    prev_session_date = None
 
     for idx, (dt, filename) in enumerate(files_with_datetime):
         batch.append(filename)
 
         # Once we have 4 files or if it's the last file in the list
         if len(batch) == 4 or idx == len(files_with_datetime) - 1:
+                
+            session_date = (dt - timedelta(hours=10)).strftime("%Y-%m-%d")
+            if session_date != prev_session_date:
+                folder_index = 0
+            # Check if the date is in the dictionary and if the integer is in the missed_match_indices list
+            if session_date in job_config and folder_index in job_config[session_date]["missed_match_indices"]:
+                print(f"No match stats are available for match on index {folder_index} on {session_date}. setting i={folder_index+1}...")
+                folder_index = check_next_index(session_date, folder_index, job_config)
+
             # Create a folder name using the first file's date in the batch and the folder index
-            folder_name = dt.strftime(f"%Y-%m-%d-{folder_index}")
+            folder_name = dt.strftime(f"{session_date}-{folder_index}")
             folder_path = os.path.join(staging_path, folder_name)
 
             # Create the folder
@@ -302,6 +328,7 @@ def partition_by_game(source_path: str, staging_path: str):
             # Clear the batch and increment the folder index
             batch = []
             folder_index += 1
+            prev_session_date = session_date
 
 
 def determine_page_type_by_page_id_label_text(label_value: str):
@@ -320,7 +347,7 @@ def determine_page_type_by_page_id_label_text(label_value: str):
             "type_name": "SHOOTING",
             "bb_file": "annotation-export/ps5-fc24-3840x2160/shooting/labels_my-project-name_2024-08-20-10-02-32.csv",
         }
-    elif label_value == "PASS ACCURACY" or label_value == "PASSACCURACY":
+    elif label_value == "PASS ACCURACY" or label_value == "PASSACCURACY" or label_value == "UPASSACCURACY":
         return {
             "type_name": "PASSING",
             "bb_file": "annotation-export/ps5-fc24-3840x2160/passing/labels_my-project-name_2024-08-20-09-28-47.csv",
@@ -328,13 +355,15 @@ def determine_page_type_by_page_id_label_text(label_value: str):
     else:
         raise ValueError(f"Unknown page type: {label_value}")
 
+def add_session_details(df: pd.DataFrame):
+    df['DATE'] = pd.to_datetime(df['DATE'])
+    # Subtract 10 hours and extract the date
+    df['Session_Adjusted_Date'] = (df['DATE'] - pd.Timedelta(hours=10)).dt.date
+    return df
 
 def parse_session_stats(directory):
     # Define the file path for the JSON file
     json_file = os.path.join(directory, SESSION_STATS_JSON_FILENAME)
-
-    # Extract the session ID from the directory path
-    session_id = os.path.basename(os.path.normpath(directory))
 
     # Load the JSON file
     with open(json_file, "r") as f:
@@ -354,32 +383,32 @@ def parse_session_stats(directory):
         # Add SESSION_ID and MATCH_ID to each section and append to respective lists
         if "SUMMARY" in match_data:
             summary_row = match_data["SUMMARY"]
-            summary_row["SESSION_ID"] = session_id
             summary_row["MATCH_ID"] = match_id
             summary_data.append(summary_row)
 
         if "DEFENDING" in match_data:
             defending_row = match_data["DEFENDING"]
-            defending_row["SESSION_ID"] = session_id
             defending_row["MATCH_ID"] = match_id
             defending_data.append(defending_row)
 
         if "PASSING" in match_data:
             passing_row = match_data["PASSING"]
-            passing_row["SESSION_ID"] = session_id
             passing_row["MATCH_ID"] = match_id
             passing_data.append(passing_row)
 
         if "SHOOTING" in match_data:
             shooting_row = match_data["SHOOTING"]
-            shooting_row["SESSION_ID"] = session_id
             shooting_row["MATCH_ID"] = match_id
             shooting_data.append(shooting_row)
 
     # Convert each list of data to a pandas DataFrame
     df_summary = pd.DataFrame(summary_data)
+    df_summary = add_session_details(df_summary)
     df_defending = pd.DataFrame(defending_data)
+    df_defending = add_session_details(df_defending)
     df_passing = pd.DataFrame(passing_data)
+    df_passing = add_session_details(df_passing)
     df_shooting = pd.DataFrame(shooting_data)
+    df_shooting = add_session_details(df_shooting)
 
     return df_summary, df_defending, df_passing, df_shooting

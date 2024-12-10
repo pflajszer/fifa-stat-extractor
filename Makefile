@@ -1,4 +1,4 @@
-VER=0.1.1
+VER=0.2.0
 build:
 	docker build . -t fifa-stat-extractor -t pawelflajszer/fifa-stat-extractor:${VER} -t pawelflajszer/fifa-stat-extractor:latest
 run:

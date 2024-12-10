@@ -9,3 +9,4 @@ SOURCE_PATH = os.path.join(BASE_PATH, "source_data")
 OUTPUT_PATH = os.path.join(BASE_PATH, "jobs", job_id)
 PAGE_ID_LABEL = "PAGE_ID"
 SESSION_STATS_JSON_FILENAME = "session_stats.json"
+JOB_CONFIG = os.path.join(SOURCE_PATH, "job_config.json")
